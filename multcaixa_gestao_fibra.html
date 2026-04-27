@@ -509,6 +509,33 @@ select:focus,input:focus{outline:none;border-color:var(--acc)}
   .pr-hbar-val{font-size:8pt;font-weight:700;color:#1a1a2e;width:40pt;flex-shrink:0}
 }
 </style>
+<style>
+/* Garantir que layout funciona em landscape */
+@media (orientation: landscape) and (max-width: 900px) {
+  nav { height: 40px; }
+  .nav-inner { height: 40px; }
+  .mbar { padding: 4px 12px; }
+  .page { padding: 6px 10px; }
+  .kpi-val { font-size: 18px; }
+  .ci { height: 140px; }
+  .ci.lg { height: 160px; }
+  .krow { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+}
+</style>
+<script>
+// Desbloquear rotação via Screen Orientation API
+(function(){
+  try {
+    if(screen.orientation && screen.orientation.unlock) {
+      screen.orientation.unlock();
+    }
+  } catch(e) {}
+  // Forçar reflow no resize para garantir responsividade
+  window.addEventListener('orientationchange', function(){
+    setTimeout(function(){ window.dispatchEvent(new Event('resize')); }, 300);
+  });
+})();
+</script>
 </head>
 <body>
 
