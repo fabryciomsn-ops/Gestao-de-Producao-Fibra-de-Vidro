@@ -33,8 +33,8 @@ html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--txt);font-family:'Barlow',sans-serif;font-size:13px;min-height:100dvh}
 
 /* NAV */
-nav{position:sticky;top:0;z-index:300;background:rgba(10,14,26,.97);border-bottom:1px solid var(--brd)}
-.nav-inner{display:flex;align-items:center;max-width:1900px;margin:0 auto;padding:0 20px;height:52px;gap:2px}
+nav{position:relative;top:0;z-index:300;background:rgba(10,14,26,.97);border-bottom:1px solid var(--brd)}
+.nav-inner{display:flex;align-items:center;max-width:1900px;margin:0 auto;padding:0 20px;min-height:52px;gap:2px}
 .logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;color:var(--acc);letter-spacing:2px;margin-right:24px;white-space:nowrap}
 .logo span{color:var(--txt2);font-weight:300}
 .logo-wrap{display:flex;align-items:center;gap:10px;margin-right:20px;flex-shrink:0;text-decoration:none}
@@ -94,7 +94,7 @@ nav{position:sticky;top:0;z-index:300;background:rgba(10,14,26,.97);border-botto
 .tw.tall{max-height:520px}
 .tw.auto{max-height:none}
 table{width:100%;border-collapse:collapse;font-size:12px}
-thead{position:sticky;top:0;z-index:5}
+thead{position:relative;top:0;z-index:5}
 th{padding:7px 11px;text-align:left;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt2);background:var(--sur2);border-bottom:1px solid var(--brd);white-space:nowrap}
 th.r{text-align:right}
 td{padding:6px 11px;border-bottom:1px solid rgba(42,58,85,.4);color:var(--txt);white-space:nowrap;vertical-align:middle}
