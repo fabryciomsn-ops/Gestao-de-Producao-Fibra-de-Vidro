@@ -626,61 +626,38 @@ select:focus,input:focus{outline:none;border-color:var(--acc)}
 }
 </style>
 <script>
-// ── Rotação, reflow e viewport fix ───────────────────────
+// ── Rotação e reflow ─────────────────────────────────────
 (function(){
-  // 1. Desbloquear orientação via API (funciona em alguns browsers)
-  try{
-    if(screen.orientation&&screen.orientation.unlock){
-      screen.orientation.unlock();
-    }
-  }catch(e){}
+  // Desbloquear orientação se suportado
+  try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(e){}
 
-  // 2. Atualizar variável --vh (iOS Safari viewport fix)
-  function setVH(){
-    var vh=window.innerHeight*0.01;
-    document.documentElement.style.setProperty('--vh',vh+'px');
-  }
-  setVH();
-
-  // 3. Reflow completo ao girar — essencial para Android Chrome
-  var rotating=false;
   function onRotate(){
-    if(rotating)return;
-    rotating=true;
-    // Fechar menu hamburger
+    // Fecha menu hamburger ao girar
     var tabs=document.getElementById('nav-tabs');
     var ham=document.getElementById('nav-ham');
-    if(tabs)tabs.classList.remove('open');
-    if(ham)ham.classList.remove('open');
-    // Sequência de reflow: força o browser a recalcular layout
-    document.documentElement.style.display='none';
-    void document.documentElement.offsetHeight;
-    document.documentElement.style.display='';
-    setVH();
-    setTimeout(function(){
-      setVH();
-      window.dispatchEvent(new Event('resize'));
-    },100);
-    setTimeout(function(){
-      setVH();
-      window.dispatchEvent(new Event('resize'));
-      rotating=false;
-    },400);
+    if(tabs){tabs.classList.remove('open');}
+    if(ham){ham.classList.remove('open');}
+    // Forçar reflow — crítico para Chrome/Safari Android
+    document.body.style.display='none';
+    void document.body.offsetHeight;
+    document.body.style.display='';
+    setTimeout(function(){window.dispatchEvent(new Event('resize'));},80);
+    setTimeout(function(){window.dispatchEvent(new Event('resize'));},300);
   }
 
-  // 4. Escutar tanto orientationchange quanto resize
   window.addEventListener('orientationchange',onRotate);
-  var lastW=window.innerWidth,lastH=window.innerHeight;
+  // Fallback: resize como proxy de rotação
+  var lastW=window.innerWidth;
   window.addEventListener('resize',function(){
-    setVH();
-    var dw=Math.abs(window.innerWidth-lastW);
-    var dh=Math.abs(window.innerHeight-lastH);
-    // Rotação troca largura/altura significativamente
-    if(dw>80||dh>80){
-      lastW=window.innerWidth;lastH=window.innerHeight;
-      onRotate();
-    }
+    if(Math.abs(window.innerWidth-lastW)>50){lastW=window.innerWidth;onRotate();}
   });
+
+  // Viewport height fix para iOS Safari (barra de endereços)
+  function setVH(){
+    document.documentElement.style.setProperty('--vh',window.innerHeight*0.01+'px');
+  }
+  setVH();
+  window.addEventListener('resize',setVH);
 })();
 </script>
 </head>
