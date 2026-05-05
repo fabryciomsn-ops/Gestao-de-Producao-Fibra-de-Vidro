@@ -60,6 +60,18 @@ nav{position:relative;top:0;z-index:300;background:rgba(10,14,26,.97);border-bot
 .mbtn.mon-mar.sel{background:rgba(0,229,160,.12);border-color:var(--mmar);color:var(--mmar)}
 .mbtn.mon-abr.sel{background:rgba(255,210,63,.12);border-color:var(--mabr);color:var(--mabr)}
 .mbtn-total.sel{background:rgba(167,139,250,.12);border-color:var(--pur);color:var(--pur)}
+/* meses dinâmicos */
+.mbtn.mon-jan.sel{background:rgba(0,212,255,0.12);border-color:#00d4ff;color:#00d4ff}
+.mbtn.mon-fev.sel{background:rgba(255,107,53,0.12);border-color:#ff6b35;color:#ff6b35}
+.mbtn.mon-mar.sel{background:rgba(0,229,160,0.12);border-color:#00e5a0;color:#00e5a0}
+.mbtn.mon-abr.sel{background:rgba(255,210,63,0.12);border-color:#ffd23f;color:#ffd23f}
+.mbtn.mon-mai.sel{background:rgba(167,139,250,0.12);border-color:#a78bfa;color:#a78bfa}
+/* meses dinâmicos */
+.mbtn.mon-jan.sel{background:rgba(0,212,255,0.12);border-color:#00d4ff;color:#00d4ff}
+.mbtn.mon-fev.sel{background:rgba(255,107,53,0.12);border-color:#ff6b35;color:#ff6b35}
+.mbtn.mon-mar.sel{background:rgba(0,229,160,0.12);border-color:#00e5a0;color:#00e5a0}
+.mbtn.mon-abr.sel{background:rgba(255,210,63,0.12);border-color:#ffd23f;color:#ffd23f}
+.mbtn.mon-mai.sel{background:rgba(167,139,250,0.12);border-color:#a78bfa;color:#a78bfa}
 .mbar-sep{width:1px;height:20px;background:var(--brd);margin:0 4px}
 
 /* PAGE */
@@ -617,10 +629,11 @@ select:focus,input:focus{outline:none;border-color:var(--acc)}
 <div class="mbar">
   <div class="mbar-inner">
     <span class="mbar-label">Período</span>
-    <button class="mbtn mon-jan" id="btn-Jan.26"  onclick="toggleMonth('Jan.26')">Jan/26</button>
-    <button class="mbtn mon-fev" id="btn-Fev.26"  onclick="toggleMonth('Fev.26')">Fev/26</button>
-    <button class="mbtn mon-mar" id="btn-Mar.26"  onclick="toggleMonth('Mar.26')">Mar/26</button>
+    <button class="mbtn mon-jan" id="btn-Jan.26" onclick="toggleMonth('Jan.26')">Jan/26</button>
+    <button class="mbtn mon-fev" id="btn-Fev.26" onclick="toggleMonth('Fev.26')">Fev/26</button>
+    <button class="mbtn mon-mar" id="btn-Mar.26" onclick="toggleMonth('Mar.26')">Mar/26</button>
     <button class="mbtn mon-abr" id="btn-Abril.26" onclick="toggleMonth('Abril.26')">Abr/26</button>
+    <button class="mbtn mon-mai" id="btn-Mai.26" onclick="toggleMonth('Mai.26')">Mai/26</button>
     <div class="mbar-sep"></div>
     <button class="mbtn mbtn-total" id="btn-all" onclick="toggleAll()">Total Geral</button>
     <div class="mbar-sep"></div>
@@ -939,7 +952,7 @@ const RES={"Jan.26":{"linha32":[{"date":"2026-01-05","operador":"PEDRO","produca
 const ALL_MONTHS=["Jan.26", "Fev.26", "Mar.26", "Abril.26", "Mai.26"];
 const MSHORT={"Jan.26": "Jan", "Fev.26": "Fev", "Mar.26": "Mar", "Abril.26": "Abr", "Mai.26": "Mai"};
 const MFULL={"Jan.26": "Janeiro/26", "Fev.26": "Fevereiro/26", "Mar.26": "Março/26", "Abril.26": "Abril/26", "Mai.26": "Maio/26"};
-const MCLS={'Jan.26':'mon-jan','Fev.26':'mon-fev','Mar.26':'mon-mar','Abril.26':'mon-abr'};
+const MCLS={"Jan.26": "mon-jan", "Fev.26": "mon-fev", "Mar.26": "mon-mar", "Abril.26": "mon-abr", "Mai.26": "mon-mai"};
 const MCOL={"Jan.26": "#00d4ff", "Fev.26": "#ff6b35", "Mar.26": "#00e5a0", "Abril.26": "#ffd23f", "Mai.26": "#a78bfa"};
 const RKEY={"Jan.26": "Jan.26", "Fev.26": "Fev.26", "Mar.26": "Mar.26", "Abril.26": "Abril.26", "Mai.26": "Mai.26"};
 const PRODUCTS=['250F','310F','500F','1000F','1500F','2000F','3000F','5000F','10000F','15000F','20000F'];
@@ -983,12 +996,19 @@ function toggleAll(){
 function updateMBtns(){
   ALL_MONTHS.forEach(m=>{
     const b=document.getElementById('btn-'+m);
-    b.className=`mbtn ${MCLS[m]}${selMonths.has(m)?' sel':''}`;
+    if(!b) return;
+    const sel=selMonths.has(m);
+    const col=MCOL[m]||'#aaa';
+    b.className=`mbtn mon-${(MCLS[m]||'gen').replace('mon-','')}${sel?' sel':''}`;
+    b.style.background=sel?col+'1e':'';
+    b.style.borderColor=sel?col:'';
+    b.style.color=sel?col:'';
   });
   const allSel=ALL_MONTHS.every(m=>selMonths.has(m));
   document.getElementById('btn-all').className=`mbtn mbtn-total${allSel?' sel':''}`;
   const arr=[...selMonths].sort((a,b)=>ALL_MONTHS.indexOf(a)-ALL_MONTHS.indexOf(b));
-  document.getElementById('period-label').textContent=arr.length===1?MFULL[arr[0]]:`${arr.length} meses selecionados`;
+  const lbl=document.getElementById('period-label');
+  if(lbl) lbl.textContent=arr.length===1?MFULL[arr[0]]:`${arr.length} meses selecionados`;
 }
 
 // ════════════ HELPERS ════════════
