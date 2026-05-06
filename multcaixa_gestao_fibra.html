@@ -488,6 +488,16 @@ select:focus,input:focus{outline:none;border-color:var(--acc)}
     background:#1e3a8a;color:#fff;padding:5pt 7pt;text-align:left;
     font-size:8pt;font-weight:700;letter-spacing:.5px;text-transform:uppercase
   }
+  .pr-table th.rot{
+    writing-mode:vertical-rl;transform:rotate(180deg);
+    white-space:nowrap;padding:6pt 3pt;font-size:7pt;
+    width:18pt;min-width:18pt;max-width:18pt;
+    text-align:left;letter-spacing:0;text-transform:none
+  }
+  .pr-table td.pes{
+    text-align:right;padding:3pt 3pt;font-size:8pt;font-weight:700;
+    width:18pt;min-width:18pt;max-width:18pt
+  }
   .pr-table th.r{text-align:right}
   .pr-table td{padding:4pt 7pt;border-bottom:0.5pt solid #e8edf5;color:#1a1a2e}
   .pr-table td.r{text-align:right;font-weight:600}
@@ -1718,20 +1728,19 @@ function renderPesMensais(ms, PRECO){
 
   // Linha 1 do cabeçalho: colunas fixas (rowspan=2) + "Medições (kg)" colspan sobre as datas
   const th_fixo_r1 = `
-    <th rowspan="2" style="white-space:nowrap;font-size:11px">Produto</th>
-    <th rowspan="2" class="r" style="white-space:nowrap;font-size:10px">Padrão<br>(kg)</th>
-    <th rowspan="2" class="r" style="white-space:nowrap;font-size:10px">Real<br>(kg)</th>
-    <th rowspan="2" class="r" style="font-size:10px">Δkg</th>
-    <th rowspan="2" class="r" style="font-size:10px">Δ%</th>`;
+    <th rowspan="2" style="white-space:nowrap">Produto</th>
+    <th rowspan="2" class="r" style="white-space:nowrap">Padrão<br>(kg)</th>
+    <th rowspan="2" class="r" style="white-space:nowrap">Real<br>Médio (kg)</th>
+    <th rowspan="2" class="r">Δ&nbsp;kg</th>
+    <th rowspan="2" class="r">Δ&nbsp;%</th>`;
 
   const th_med_grupo = nDatas > 0
     ? `<th colspan="${nDatas}" class="r" style="color:var(--acc);border-bottom:1px solid var(--acc);text-align:center">Pesagens (kg)</th>`
     : '';
 
   // Linha 2 do cabeçalho: uma coluna por data
-  const _fmtD = d => d.length>=5 ? d.slice(0,5) : d;  // dd/mm/yyyy → dd/mm
   const th_datas = datas.map(d =>
-    `<th class="r" style="white-space:nowrap;font-size:10px;font-weight:600;color:var(--txt2);padding:3px 4px">${_fmtD(d)}</th>`
+    `<th class="r" style="white-space:nowrap;font-size:11px;font-weight:600;color:var(--txt2)">${d}</th>`
   ).join('');
 
   const rows = filtered.map(p => {
@@ -1754,28 +1763,27 @@ function renderPesMensais(ms, PRECO){
       if(peso == null) return `<td class="n" style="color:var(--txt3);font-size:11px">—</td>`;
       const dabs = Math.abs((peso - p.peso_padrao) / p.peso_padrao * 100);
       const mc   = dabs <= 3 ? 'var(--grn)' : dabs <= 5 ? 'var(--ylw)' : 'var(--red)';
-      return `<td class="n" style="color:${mc};font-weight:700;font-size:10px;padding:3px 4px">${f(peso,1)}</td>`;
+      return `<td class="n" style="color:${mc};font-weight:700;font-size:12px">${f(peso,2)}</td>`;
     }).join('');
 
     return `<tr>
-      <td class="b" style="white-space:nowrap;font-size:11px">${p.produto}</td>
-      <td class="n" style="font-size:10px;padding:3px 5px">${f(p.peso_padrao,1)}</td>
-      <td class="n" style="color:${cor};font-weight:600;font-size:10px;padding:3px 5px">${f(p.peso_real,1)}</td>
-      <td class="n" style="color:${dkCor};font-size:10px;padding:3px 4px">${dkStr}</td>
-      <td class="n" style="color:${cor};font-size:10px;padding:3px 4px">${f(p.var_pct,1)}%</td>
+      <td class="b" style="white-space:nowrap;font-size:12px">${p.produto}</td>
+      <td class="n" style="font-size:12px">${f(p.peso_padrao,2)}</td>
+      <td class="n" style="color:${cor};font-weight:600;font-size:12px">${f(p.peso_real,2)}</td>
+      <td class="n" style="color:${dkCor};font-size:12px">${dkStr}</td>
+      <td class="n" style="color:${cor};font-size:12px">${f(p.var_pct,1)}%</td>
       ${dataCells}
     </tr>`;
   }).join('');
 
   wrap.innerHTML = `
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-    <table style="width:100%;min-width:max-content;border-collapse:collapse;font-size:12px">
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
       <thead>
         <tr style="border-bottom:1px solid var(--brd)">${th_fixo_r1}${th_med_grupo}</tr>
         <tr style="border-bottom:2px solid var(--brd)">${th_datas}</tr>
       </thead>
       <tbody>${rows}</tbody>
-    </table></div>`;
+    </table>`;
 }
 
 
@@ -2232,15 +2240,13 @@ function buildRptPesagens(meses){
     const datas=[...datasSet].sort();
 
     // Header com colspan para "Pesagens (kg)"
-    const thFixed=`<th style="min-width:110pt">Produto</th>
-      <th class="r">Padrão<br>(kg)</th><th class="r">Real<br>(kg)</th>
-      <th class="r">Δ kg</th><th class="r">Δ %</th><th>Status</th>`;
+    const thFixed=`<th style="min-width:90pt;font-size:8pt">Produto</th><th class="r" style="white-space:nowrap;font-size:7pt">Padrão<br>(kg)</th><th class="r" style="white-space:nowrap;font-size:7pt">Real<br>(kg)</th><th class="r" style="font-size:7pt">Δkg</th><th class="r" style="font-size:7pt">Δ%</th><th style="font-size:7pt">St.</th>`;
+    const _sd=d=>{const p=d.split('/');return p.length>=2?p[0]+'/'+p[1]:d;};
     const thDatas=datas.length>0
-      ? `<th colspan="${datas.length}" style="text-align:center;color:#3b5bdb;border-bottom:1pt solid #3b5bdb;font-size:8pt">Pesagens (kg)</th>` : '';
-    const _sd=d=>d.length>=5?d.slice(0,5):d;
-    const thDatas2=datas.map(d=>`<th class="r" style="font-size:7pt;color:#4a6080;padding:2pt 3pt;white-space:nowrap">${_sd(d)}</th>`).join('');
+      ? `<th colspan="${datas.length}" style="text-align:center;color:#3b5bdb;border-bottom:1pt solid #3b5bdb;font-size:7pt;padding:3pt 4pt">Pesagens (kg)</th>` : '';
+    const thDatas2=datas.map(d=>`<th class="rot">${_sd(d)}</th>`).join('');
 
-    html+=`<div style="overflow-x:auto"><table class="pr-table" style="min-width:max-content"><thead>
+    html+=`<div style="overflow-x:auto;width:100%"><table class="pr-table" style="table-layout:auto"><thead>
       <tr style="border-bottom:1pt solid #dce3f0">${thFixed}${thDatas}</tr>
       ${datas.length>0?`<tr style="border-bottom:2pt solid #dce3f0"><th colspan="6"></th>${thDatas2}</tr>`:''}
     </thead><tbody>
@@ -2257,15 +2263,15 @@ function buildRptPesagens(meses){
         if(peso==null) return `<td class="r" style="color:#8090a8">—</td>`;
         const dv=Math.abs((peso-p.peso_padrao)/p.peso_padrao*100);
         const mc=dv<=3?'#166534':dv<=5?'#854d0e':'#991b1b';
-        return `<td class="r" style="color:${mc};font-weight:700;font-size:8pt;padding:2pt 3pt">${_rf(peso,1)}</td>`;
+        return `<td class="pes" style="color:${mc}">${_rf(peso,1)}</td>`;
       }).join('');
       return `<tr>
-        <td><b>${p.produto}</b></td>
-        <td class="r">${_rf(p.peso_padrao,1)}</td>
-        <td class="r ${cls}"><b>${_rf(p.peso_real,1)}</b></td>
-        <td class="r ${diff>0?'bad':diff<0?'good':''}">${dkStr}</td>
-        <td class="r ${cls}">${p.var_pct.toFixed(1)}%</td>
-        <td><span style="padding:2pt 5pt;border-radius:3pt;font-size:7pt;font-weight:700;background:${bg};color:${col}">${pabs<=3?'OK':pabs<=5?'ATENÇÃO':'FORA'}</span></td>
+        <td style="font-size:8pt;padding:3pt 5pt"><b>${p.produto}</b></td>
+        <td class="r" style="font-size:8pt;padding:3pt 4pt">${_rf(p.peso_padrao,1)}</td>
+        <td class="r ${cls}" style="font-size:8pt;padding:3pt 4pt"><b>${_rf(p.peso_real,1)}</b></td>
+        <td class="r ${diff>0?'bad':diff<0?'good':''}" style="font-size:8pt;padding:3pt 4pt">${dkStr}</td>
+        <td class="r ${cls}" style="font-size:8pt;padding:3pt 4pt">${p.var_pct.toFixed(1)}%</td>
+        <td style="padding:3pt 3pt"><span style="padding:1pt 3pt;border-radius:2pt;font-size:6pt;font-weight:700;background:${bg};color:${col}">${pabs<=3?'OK':pabs<=5?'AT':'FORA'}</span></td>
         ${medCells}
       </tr>`;
     }).join('')}
