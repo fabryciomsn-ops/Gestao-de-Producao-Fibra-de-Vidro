@@ -110,6 +110,7 @@ nav{position:relative;top:0;z-index:300;background:rgba(10,14,26,.97);border-bot
 table{width:100%;border-collapse:collapse;font-size:12px}
 thead{position:relative;top:0;z-index:5}
 th{padding:7px 11px;text-align:left;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt2);background:var(--sur2);border-bottom:1px solid var(--brd);white-space:nowrap}
+th.th-vert{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;padding:8px 4px;font-size:9px;width:22px;min-width:22px;max-width:22px;text-align:left;letter-spacing:0;text-transform:none;font-weight:600}
 th.r{text-align:right}
 td{padding:6px 11px;border-bottom:1px solid rgba(42,58,85,.4);color:var(--txt);white-space:nowrap;vertical-align:middle}
 tr:last-child td{border-bottom:none}
@@ -488,18 +489,8 @@ select:focus,input:focus{outline:none;border-color:var(--acc)}
     background:#1e3a8a;color:#fff;padding:5pt 7pt;text-align:left;
     font-size:8pt;font-weight:700;letter-spacing:.5px;text-transform:uppercase
   }
-  .pr-table th.rot{
-    writing-mode:vertical-rl;transform:rotate(180deg);
-    white-space:nowrap;padding:6pt 3pt;font-size:7pt;
-    width:18pt;min-width:18pt;max-width:18pt;
-    text-align:left;letter-spacing:0;text-transform:none
-  }
-  .pr-table td.pes{
-    text-align:right;padding:3pt 3pt;font-size:8pt;font-weight:700;
-    width:18pt;min-width:18pt;max-width:18pt
-  }
   .pr-table th.r{text-align:right}
-  .pr-table td{padding:4pt 7pt;border-bottom:0.5pt solid #e8edf5;color:#1a1a2e}
+  .pr-table td{padding:3pt 5pt;border-bottom:0.5pt solid #e8edf5;color:#1a1a2e}
   .pr-table td.r{text-align:right;font-weight:600}
   .pr-table td.dim{color:#8090a8;font-size:8pt}
   .pr-table tr:nth-child(even) td{background:#f5f8ff}
@@ -1739,8 +1730,10 @@ function renderPesMensais(ms, PRECO){
     : '';
 
   // Linha 2 do cabeçalho: uma coluna por data
+  // dd/mm/aaaa → dd/mm
+  const _fmt = d => { const p=d.split('/'); return p.length>=2?p[0]+'/'+p[1]:d; };
   const th_datas = datas.map(d =>
-    `<th class="r" style="white-space:nowrap;font-size:11px;font-weight:600;color:var(--txt2)">${d}</th>`
+    `<th class="th-vert">${_fmt(d)}</th>`
   ).join('');
 
   const rows = filtered.map(p => {
@@ -1763,7 +1756,7 @@ function renderPesMensais(ms, PRECO){
       if(peso == null) return `<td class="n" style="color:var(--txt3);font-size:11px">—</td>`;
       const dabs = Math.abs((peso - p.peso_padrao) / p.peso_padrao * 100);
       const mc   = dabs <= 3 ? 'var(--grn)' : dabs <= 5 ? 'var(--ylw)' : 'var(--red)';
-      return `<td class="n" style="color:${mc};font-weight:700;font-size:12px">${f(peso,2)}</td>`;
+      return `<td class="n" style="color:${mc};font-weight:700;font-size:10px;padding:3px 4px;width:22px;max-width:22px;text-align:right">${f(peso,1)}</td>`;
     }).join('');
 
     return `<tr>
@@ -2240,13 +2233,12 @@ function buildRptPesagens(meses){
     const datas=[...datasSet].sort();
 
     // Header com colspan para "Pesagens (kg)"
-    const thFixed=`<th style="min-width:90pt;font-size:8pt">Produto</th><th class="r" style="white-space:nowrap;font-size:7pt">Padrão<br>(kg)</th><th class="r" style="white-space:nowrap;font-size:7pt">Real<br>(kg)</th><th class="r" style="font-size:7pt">Δkg</th><th class="r" style="font-size:7pt">Δ%</th><th style="font-size:7pt">St.</th>`;
-    const _sd=d=>{const p=d.split('/');return p.length>=2?p[0]+'/'+p[1]:d;};
+    const thFixed=`<th style="min-width:60pt;max-width:80pt;font-size:7.5pt">Produto</th><th class="r" style="white-space:nowrap;font-size:7pt;padding:4pt 4pt">Pad.<br>(kg)</th><th class="r" style="white-space:nowrap;font-size:7pt;padding:4pt 4pt">Real<br>(kg)</th><th class="r" style="font-size:7pt;padding:4pt 3pt">Δkg</th><th class="r" style="font-size:7pt;padding:4pt 3pt">Δ%</th><th style="font-size:7pt;padding:4pt 3pt">St.</th>`;
     const thDatas=datas.length>0
-      ? `<th colspan="${datas.length}" style="text-align:center;color:#3b5bdb;border-bottom:1pt solid #3b5bdb;font-size:7pt;padding:3pt 4pt">Pesagens (kg)</th>` : '';
-    const thDatas2=datas.map(d=>`<th class="rot">${_sd(d)}</th>`).join('');
+      ? `<th colspan="${datas.length}" style="text-align:center;color:#3b5bdb;border-bottom:1pt solid #3b5bdb">Pesagens (kg)</th>` : '';
+    const thDatas2=datas.map(d=>`<th class="r" style="font-size:8pt;color:#4a6080">${d}</th>`).join('');
 
-    html+=`<div style="overflow-x:auto;width:100%"><table class="pr-table" style="table-layout:auto"><thead>
+    html+=`<table class="pr-table"><thead>
       <tr style="border-bottom:1pt solid #dce3f0">${thFixed}${thDatas}</tr>
       ${datas.length>0?`<tr style="border-bottom:2pt solid #dce3f0"><th colspan="6"></th>${thDatas2}</tr>`:''}
     </thead><tbody>
@@ -2256,26 +2248,26 @@ function buildRptPesagens(meses){
       const cls=pabs<=3?'good':pabs<=5?'warn':'bad';
       const bg =pabs<=3?'#dcfce7':pabs<=5?'#fef9c3':'#fee2e2';
       const col=pabs<=3?'#166534':pabs<=5?'#854d0e':'#991b1b';
-      const dkStr=diff===0?'—':(diff>0?'+':'')+diff.toFixed(2);
+            const dkStr=diff===0?'—':(diff>0?'+':'')+diff.toFixed(1);
       const medMap={};(p.medicoes||[]).forEach(md=>medMap[md.data]=md.peso);
       const medCells=datas.map(d=>{
         const peso=medMap[d];
-        if(peso==null) return `<td class="r" style="color:#8090a8">—</td>`;
+        if(peso==null) return `<td class="pes" style="color:#8090a8">—</td>`;
         const dv=Math.abs((peso-p.peso_padrao)/p.peso_padrao*100);
         const mc=dv<=3?'#166534':dv<=5?'#854d0e':'#991b1b';
         return `<td class="pes" style="color:${mc}">${_rf(peso,1)}</td>`;
       }).join('');
       return `<tr>
-        <td style="font-size:8pt;padding:3pt 5pt"><b>${p.produto}</b></td>
-        <td class="r" style="font-size:8pt;padding:3pt 4pt">${_rf(p.peso_padrao,1)}</td>
-        <td class="r ${cls}" style="font-size:8pt;padding:3pt 4pt"><b>${_rf(p.peso_real,1)}</b></td>
-        <td class="r ${diff>0?'bad':diff<0?'good':''}" style="font-size:8pt;padding:3pt 4pt">${dkStr}</td>
-        <td class="r ${cls}" style="font-size:8pt;padding:3pt 4pt">${p.var_pct.toFixed(1)}%</td>
-        <td style="padding:3pt 3pt"><span style="padding:1pt 3pt;border-radius:2pt;font-size:6pt;font-weight:700;background:${bg};color:${col}">${pabs<=3?'OK':pabs<=5?'AT':'FORA'}</span></td>
+        <td style="font-size:7.5pt;padding:3pt 4pt;max-width:75pt;overflow:hidden;text-overflow:ellipsis"><b>${p.produto.replace('CAIXA ','CX ').replace('TAMPA ','TP ')}</b></td>
+        <td class="r" style="font-size:7.5pt;padding:3pt 4pt">${_rf(p.peso_padrao,1)}</td>
+        <td class="r ${cls}" style="font-size:7.5pt;padding:3pt 4pt"><b>${_rf(p.peso_real,1)}</b></td>
+        <td class="r ${diff>0?'bad':diff<0?'good':''}" style="font-size:7.5pt;padding:3pt 3pt">${dkStr}</td>
+        <td class="r ${cls}" style="font-size:7.5pt;padding:3pt 3pt">${p.var_pct.toFixed(1)}%</td>
+        <td style="padding:3pt 2pt"><span style="padding:1pt 3pt;border-radius:2pt;font-size:6pt;font-weight:700;background:${bg};color:${col}">${pabs<=3?'OK':pabs<=5?'AT':'FORA'}</span></td>
         ${medCells}
       </tr>`;
     }).join('')}
-    </tbody></table></div></div>`;
+    </tbody></table></div>`;
   });
 
   // ── Síntese diária de pesagem ─────────────────────────────────────────────
