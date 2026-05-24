@@ -2064,19 +2064,100 @@ function _qOpSection(ncs,ncByOp){
 }
 
 function _qTrend(ms){
-  var mesNCs={};ms.forEach(function(m){mesNCs[m]=(_NC_DATA[m]||[]).reduce(function(s,n){return s+n.qtde;},0);});
-  var data=ms.map(function(m){return[MFULL[m]||m,mesNCs[m]||0];});
-  var maxV=data.length?Math.max.apply(null,[1].concat(data.map(function(d){return d[1];}))):1;
-  document.getElementById('qual-trend').innerHTML=data.map(function(item){
-    var l=item[0],v=item[1],w=maxV>0?(v/maxV)*100:0,cor=v===0?'#00e5a0':v<5?'#ffd23f':'#ff6b35';
-    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'+
-      '<div style="font-size:10px;color:var(--txt2);width:36px;flex-shrink:0">'+l+'</div>'+
-      '<div style="flex:1;height:18px;background:var(--sur2);border-radius:4px;overflow:hidden">'+
-        '<div style="height:100%;width:'+w+'%;background:'+cor+';border-radius:4px;min-width:'+(v>0?'4px':'0')+';transition:width .4s"></div>'+
+  // Para cada mês: calcular NCs reais + projeção para o mês atual (parcial)
+  var today = new Date();
+  var todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+
+  // Dias úteis no mês (aproximação: todos os dias do mês com produção registrada)
+  function diasProdMes(m){
+    return Object.values(PROD[m]||{}).map(function(d){return d.date;}).sort();
+  }
+
+  var rows = ms.map(function(m){
+    var ncsM     = _NC_DATA[m] || [];
+    var real     = ncsM.reduce(function(s,n){return s+n.qtde;},0);
+    var diasProd = diasProdMes(m);
+    var ultimoDia= diasProd.length ? diasProd[diasProd.length-1] : todayStr;
+    var isMesAtual = ultimoDia >= todayStr.substring(0,7); // mesmo ano-mês?
+
+    var projecao = null;
+    var diasDecorridos = 0, diasTotais = 0;
+
+    if(isMesAtual && diasProd.length > 0){
+      // Dias com produção até hoje (inclusive)
+      var diasAte = diasProd.filter(function(d){return d<=todayStr;});
+      diasDecorridos = diasAte.length;
+      diasTotais     = diasProd.length; // total de dias com prod no mês (inclui futuros já registrados no Excel)
+
+      // Se não há dias futuros no Excel, estimar: média de dias por mês com base nos meses anteriores
+      if(diasTotais <= diasDecorridos){
+        // Usar média de dias úteis dos meses anteriores no período
+        var mediaDias = 0, countM = 0;
+        ms.forEach(function(mx){
+          if(mx !== m){var dp=diasProdMes(mx);if(dp.length){mediaDias+=dp.length;countM++;}}
+        });
+        diasTotais = countM > 0 ? Math.round(mediaDias/countM) : diasDecorridos + 5;
+      }
+
+      if(diasDecorridos > 0 && diasTotais > diasDecorridos){
+        var taxaDiaria   = real / diasDecorridos;          // NC/dia até agora
+        var diasRestantes= diasTotais - diasDecorridos;
+        projecao = Math.round(real + taxaDiaria * diasRestantes);
+      }
+    }
+
+    return {
+      mes: MFULL[m]||m,
+      real: real,
+      projecao: projecao,
+      isMesAtual: isMesAtual,
+      diasDecorridos: diasDecorridos,
+      diasTotais: diasTotais
+    };
+  });
+
+  // Escala: máximo entre reais e projeções
+  var maxV = Math.max.apply(null, [1].concat(rows.map(function(r){
+    return Math.max(r.real, r.projecao||0);
+  })));
+
+  document.getElementById('qual-trend').innerHTML = rows.map(function(r){
+    var wReal = maxV>0?(r.real/maxV)*100:0;
+    var wProj = (r.projecao && maxV>0)?(r.projecao/maxV)*100:0;
+    var corReal = r.real===0?'#00e5a0':r.real<5?'#ffd23f':'#ff6b35';
+
+    var barReal = '<div style="height:100%;width:'+wReal+'%;background:'+corReal+';border-radius:4px;min-width:'+(r.real>0?'4px':'0')+';transition:width .4s"></div>';
+
+    var projecaoHtml = '';
+    if(r.projecao !== null){
+      // Barra de projeção: parte tracejada sobre o real
+      projecaoHtml =
+        '<div style="display:flex;align-items:center;gap:6px;margin-top:3px">'+
+          '<div style="font-size:9px;color:var(--txt3);width:36px;flex-shrink:0"></div>'+
+          '<div style="flex:1;height:14px;background:transparent;border-radius:4px;position:relative;border:1px dashed var(--acc);overflow:hidden">'+
+            '<div style="height:100%;width:'+wProj+'%;background:rgba(0,212,255,.18);border-radius:3px;min-width:4px;transition:width .4s"></div>'+
+            '<div style="position:absolute;inset:0;display:flex;align-items:center;padding-left:4px">'+
+              '<span style="font-size:9px;color:var(--acc);font-weight:700">projeção: '+r.projecao+' NCs</span>'+
+            '</div>'+
+          '</div>'+
+          '<span style="font-size:9px;color:var(--acc);width:28px;text-align:right;flex-shrink:0">📈'+r.projecao+'</span>'+
+        '</div>'+
+        '<div style="font-size:8px;color:var(--txt3);margin-top:2px;padding-left:44px">'+
+          r.diasDecorridos+'/'+r.diasTotais+' dias úteis decorridos'+
+        '</div>';
+    }
+
+    return '<div style="margin-bottom:'+(r.projecao?'12px':'7px')+'">'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+        '<div style="font-size:10px;color:var(--txt2);width:36px;flex-shrink:0;font-weight:'+(r.isMesAtual?'700':'400')+';color:'+(r.isMesAtual?'var(--acc)':'var(--txt2)')+'">'+r.mes+'</div>'+
+        '<div style="flex:1;height:18px;background:var(--sur2);border-radius:4px;overflow:hidden">'+barReal+'</div>'+
+        '<span style="font-size:11px;font-weight:700;color:'+corReal+';width:28px;text-align:right;flex-shrink:0">'+r.real+'</span>'+
       '</div>'+
-      '<span style="font-size:11px;font-weight:700;color:'+cor+';width:28px;text-align:right;flex-shrink:0">'+v+'</span></div>';
+      projecaoHtml+
+    '</div>';
   }).join('');
 }
+
 
 function _qProdTable(ncs){
   var byP={};
