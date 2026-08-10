@@ -468,6 +468,7 @@ select:focus,input:focus{outline:none;border-color:var(--acc)}
 
   /* KPI grid impressão */
   .pr-kpis{display:grid;gap:8pt;margin-bottom:12pt}
+  .pr-kpis-5{grid-template-columns:repeat(5,1fr)}
   .pr-kpis-4{grid-template-columns:repeat(4,1fr)}
   .pr-kpis-3{grid-template-columns:repeat(3,1fr)}
   .pr-kpis-2{grid-template-columns:repeat(2,1fr)}
@@ -517,6 +518,8 @@ select:focus,input:focus{outline:none;border-color:var(--acc)}
   /* Grade 2 colunas */
   .pr-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12pt;margin-bottom:12pt}
   .pr-grid2 .pr-section{margin-bottom:0}
+  .pr-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12pt;margin-bottom:12pt}
+  .pr-grid3 .pr-section{margin-bottom:0}
 
   /* Alertas */
   .pr-alert{
@@ -2580,13 +2583,15 @@ function buildRptComparativo(meses){
     const totCx=days.reduce((a,d)=>a+d.total_cx,0);
     const totTp=days.reduce((a,d)=>a+d.total_tp,0);
     const totKg=days.reduce((a,d)=>a+d.prod_kg,0);
+    const totVal=days.reduce((a,d)=>a+d.valor,0);
     const meta=days.reduce((a,d)=>a+(d.meta_kg||4500),0);
     const tRes=res.reduce((a,d)=>a+d.residuo_total,0);
     const tProd=res.reduce((a,d)=>a+d.producao_kg,0);
     const ar=tProd>0?tRes/tProd:0;
-    return {m,label:MFULL[m]||m,short:MSHORT[m]||m,totCx,totTp,totKg,meta,efic:meta>0?totKg/meta:0,tRes,tProd,ar,dias:days.length};
+    return {m,label:MFULL[m]||m,short:MSHORT[m]||m,totCx,totTp,totKg,totVal,meta,efic:meta>0?totKg/meta:0,tRes,tProd,ar,dias:days.length};
   });
   const gTotKg=stats.reduce((a,s)=>a+s.totKg,0);
+  const gTotVal=stats.reduce((a,s)=>a+s.totVal,0);
   const gTotCx=stats.reduce((a,s)=>a+s.totCx,0);
   const gTotTp=stats.reduce((a,s)=>a+s.totTp,0);
   const gTotRes=stats.reduce((a,s)=>a+s.tRes,0);
@@ -2594,31 +2599,26 @@ function buildRptComparativo(meses){
   const gAr=gTotProd>0?gTotRes/gTotProd:0;
   const gEfic=stats.reduce((a,s)=>a+s.meta,0)>0?gTotKg/stats.reduce((a,s)=>a+s.meta,0):0;
   const maxKg=Math.max(...stats.map(s=>s.totKg))||1;
+  const maxVal=Math.max(...stats.map(s=>s.totVal))||1;
   let html=_pageHeader('Relatório Comparativo Mensal',_periodoLabel(meses),`Análise evolutiva de ${meses.length} meses`);
-  html+=`<div class="pr-kpis pr-kpis-4">
+  html+=`<div class="pr-kpis pr-kpis-5">
     ${_kpi('Total kg',_rf(gTotKg,0)+' kg',`${meses.length} meses`,'#3b5bdb')}
+    ${_kpi('Valor Produzido','R$ '+_rf(gTotVal,1),`${meses.length} meses`,'#d97706')}
     ${_kpi('Total CX+TP',_rf(gTotCx+gTotTp),'peças','#0891b2')}
     ${_kpi('Eficiência Média',_rfp(gEfic),'vs meta','#7c3aed',_pill(gEfic>=0.9?'ÓTIMO':gEfic>=0.75?'OK':'BAIXO',gEfic>=0.9?'green':gEfic>=0.75?'yellow':'red'))}
     ${_kpi('% Resíduo Médio',_rfp(gAr),`${_rf(gTotRes,0)} kg`,'#dc2626',_pill(gAr<0.025?'ÓTIMO':gAr<=0.03?'OK':'ALTO',gAr<0.025?'green':gAr<=0.03?'yellow':'red'))}
   </div>`;
-  html+=`<div class="pr-section"><div class="pr-section-title">📊 Comparativo por Mês</div><table class="pr-table"><thead><tr><th>Mês</th><th class="r">Dias</th><th class="r">CX</th><th class="r">TP</th><th class="r">kg Prod.</th><th class="r">Eficiência</th><th class="r">% Resíduo</th><th class="r">Valor Resíduo</th></tr></thead><tbody>
-  ${stats.map(s=>`<tr><td><b>${s.label}</b></td><td class="r">${s.dias}</td><td class="r">${_rf(s.totCx)}</td><td class="r">${_rf(s.totTp)}</td><td class="r"><b>${_rf(s.totKg,0)}</b></td><td class="r ${s.efic>=0.9?'good':s.efic>=0.75?'warn':'bad'}">${_rfp(s.efic)}</td><td class="r ${s.ar<0.025?'good':s.ar<=0.03?'warn':'bad'}">${_rfp(s.ar)}</td><td class="r dim">R$${_rf(s.tRes*PRECO_KG_DEFAULT,0)}</td></tr>`).join('')}
-  <tr class="total"><td>TOTAL</td><td class="r">${stats.reduce((a,s)=>a+s.dias,0)}</td><td class="r">${_rf(gTotCx)}</td><td class="r">${_rf(gTotTp)}</td><td class="r">${_rf(gTotKg,0)}</td><td class="r">${_rfp(gEfic)}</td><td class="r">${_rfp(gAr)}</td><td class="r">R$${_rf(gTotRes*PRECO_KG_DEFAULT,0)}</td></tr>
+  html+=`<div class="pr-section"><div class="pr-section-title">📊 Comparativo por Mês</div><table class="pr-table"><thead><tr><th>Mês</th><th class="r">Dias</th><th class="r">CX</th><th class="r">TP</th><th class="r">kg Prod.</th><th class="r">Valor Produzido</th><th class="r">Eficiência</th><th class="r">% Resíduo</th><th class="r">Valor Resíduo</th></tr></thead><tbody>
+  ${stats.map(s=>`<tr><td><b>${s.label}</b></td><td class="r">${s.dias}</td><td class="r">${_rf(s.totCx)}</td><td class="r">${_rf(s.totTp)}</td><td class="r"><b>${_rf(s.totKg,0)}</b></td><td class="r">R$${_rf(s.totVal,1)}</td><td class="r ${s.efic>=0.9?'good':s.efic>=0.75?'warn':'bad'}">${_rfp(s.efic)}</td><td class="r ${s.ar<0.025?'good':s.ar<=0.03?'warn':'bad'}">${_rfp(s.ar)}</td><td class="r dim">R$${_rf(s.tRes*PRECO_KG_DEFAULT,0)}</td></tr>`).join('')}
+  <tr class="total"><td>TOTAL</td><td class="r">${stats.reduce((a,s)=>a+s.dias,0)}</td><td class="r">${_rf(gTotCx)}</td><td class="r">${_rf(gTotTp)}</td><td class="r">${_rf(gTotKg,0)}</td><td class="r">R$${_rf(gTotVal,1)}</td><td class="r">${_rfp(gEfic)}</td><td class="r">${_rfp(gAr)}</td><td class="r">R$${_rf(gTotRes*PRECO_KG_DEFAULT,0)}</td></tr>
   </tbody></table></div>`;
-  html+=`<div class="pr-grid2"><div class="pr-section"><div class="pr-section-title">🏭 kg Produzidos por Mês</div><div class="pr-hbar-chart">
+  html+=`<div class="pr-grid3"><div class="pr-section"><div class="pr-section-title">🏭 kg Produzidos por Mês</div><div class="pr-hbar-chart">
   ${stats.map(s=>`<div class="pr-hbar-row"><div class="pr-hbar-lbl">${s.short}</div><div class="pr-hbar-track"><div class="pr-hbar-fill" style="width:${Math.round(s.totKg/maxKg*100)}%;background:#3b5bdb"></div></div><div class="pr-hbar-val">${_rf(s.totKg,0)}</div></div>`).join('')}
+  </div></div><div class="pr-section"><div class="pr-section-title">💰 Valor Produzido por Mês</div><div class="pr-hbar-chart">
+  ${stats.map(s=>`<div class="pr-hbar-row"><div class="pr-hbar-lbl">${s.short}</div><div class="pr-hbar-track"><div class="pr-hbar-fill" style="width:${Math.round(s.totVal/maxVal*100)}%;background:#d97706"></div></div><div class="pr-hbar-val">R$${_rf(s.totVal,1)}</div></div>`).join('')}
   </div></div><div class="pr-section"><div class="pr-section-title">♻️ % Resíduo por Mês</div><div class="pr-hbar-chart">
   ${stats.map(s=>{const col=s.ar<0.025?'#22c55e':s.ar<=0.03?'#eab308':'#ef4444';return `<div class="pr-hbar-row"><div class="pr-hbar-lbl">${s.short}</div><div class="pr-hbar-track"><div class="pr-hbar-fill" style="width:${Math.min(s.ar*1000,100)}%;background:${col}"></div></div><div class="pr-hbar-val">${_rfp(s.ar)}</div></div>`;}).join('')}
   </div></div></div>`;
-  if(stats.length>1){
-    html+=`<div class="pr-section"><div class="pr-section-title">📈 Variação Mês a Mês</div><table class="pr-table"><thead><tr><th>Período</th><th class="r">Δ kg</th><th class="r">Δ CX</th><th class="r">Δ Eficiência</th><th class="r">Δ % Resíduo</th><th>Tendência</th></tr></thead><tbody>
-    ${stats.slice(1).map((s,i)=>{
-      const prev=stats[i];
-      const dKg=s.totKg-prev.totKg,dCx=s.totCx-prev.totCx,dEf=s.efic-prev.efic,dAr=s.ar-prev.ar;
-      return `<tr><td>${prev.short} → ${s.short}</td><td class="r ${dKg>=0?'good':'bad'}">${dKg>=0?'+':''}${_rf(dKg,0)}</td><td class="r ${dCx>=0?'good':'bad'}">${dCx>=0?'+':''}${_rf(dCx,0)}</td><td class="r ${dEf>=0?'good':'bad'}">${dEf>=0?'+':''}${_rfp(dEf)}</td><td class="r ${dAr<=0?'good':'bad'}">${dAr>=0?'+':''}${_rfp(dAr)}</td><td>${dKg>0&&dAr<=0?'📈 Melhorou':dKg<0&&dAr>0?'📉 Piorou':'➡️ Estável'}</td></tr>`;
-    }).join('')}
-    </tbody></table></div>`;
-  }
   html+=_footer();
   return html;
 }
